@@ -17,15 +17,23 @@
     user-select: none;
   }
 
-  /* body 背景与首页渐变一致，作为 iOS 全屏/独立 Web App 模式下
-     底部 Home Indicator 安全区漏出区域的兜底色，保证视觉连续填满 */
+  /* 兜底色：与首页渐变底部一致，保证 iOS 全屏/独立 Web App 模式下
+     底部 Home Indicator 安全区不至于露出纯白，视觉连续 */
+  html {
+    background: #24243e;
+  }
   body {
     background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
   }
 
   .screen {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* 向下多扩展一个底部安全区高度，让背景平铺覆盖 Home Indicator 圆弧区域，
+       避免 iOS 全屏/独立 Web App 模式下底部漏出兜底色 */
+    height: calc(100% + env(safe-area-inset-bottom));
     display: flex;
     flex-direction: column;
     transition: opacity .25s ease;
@@ -59,42 +67,13 @@
     0% { background-position: 0% 0; }
     100% { background-position: 300% 0; }
   }
-  #home .title p {
-    margin-top: 8px;
-    font-size: 14px;
-    color: rgba(255,255,255,.75);
-    font-weight: 500;
+  #home .title .version {
+    margin-top: 6px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,.45);
+    font-weight: 600;
   }
-  #fullscreen-btn {
-    margin: 16px auto 0;
-    display: block;
-    border: 1px solid rgba(255,255,255,.45);
-    background: rgba(255,255,255,.12);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 10px 26px;
-    border-radius: 30px;
-    cursor: pointer;
-    backdrop-filter: blur(6px);
-    transition: background .2s ease;
-  }
-  #fullscreen-btn:active { background: rgba(255,255,255,.28); transform: scale(.96); }
-  #home .howto {
-    margin: 18px auto 22px;
-    max-width: 520px;
-    background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 14px;
-    padding: 12px 16px;
-    color: rgba(255,255,255,.9);
-    font-size: 13px;
-    line-height: 1.9;
-    text-align: center;
-    backdrop-filter: blur(6px);
-  }
-  #home .howto b { color: #ffd86f; }
 
   .grid {
     display: flex;
@@ -176,6 +155,9 @@
   }
   #back:active { transform: scale(.9); }
   #cat-label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 14px;
     font-weight: 700;
     letter-spacing: 1px;
@@ -185,21 +167,17 @@
     border-radius: 20px;
     backdrop-filter: blur(4px);
     text-shadow: 0 1px 4px rgba(0,0,0,.4);
-  }
-  #played-count {
-    font-size: 13px;
-    font-weight: 700;
-    color: rgba(255,255,255,.95);
-    background: rgba(0,0,0,.22);
-    padding: 6px 14px;
-    border-radius: 20px;
-    backdrop-filter: blur(4px);
-    text-shadow: 0 1px 4px rgba(0,0,0,.4);
-    min-width: 58px;
-    text-align: center;
+    white-space: nowrap;
   }
 
-  #word-wrap { display: flex; justify-content: center; align-items: center; width: 100%; }
+  #word-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    /* 抵消 .screen 因向下扩展安全区而导致的居中偏移，使单词严格位于可视区中心 */
+    transform: translateY(calc(env(safe-area-inset-bottom) * -0.5));
+  }
   #word {
     color: #fff;
     font-weight: 900;
@@ -246,14 +224,8 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p>举着手机 · 你说我猜 · 换词不停</p>
+      <p class="version">v1.1.3</p>
     </div>
-    <div class="howto">
-      <b>玩法：</b>手机屏幕朝外举在额头上<br>
-      <b>换词：</b>点击 / 双击屏幕任意处<br>
-      <b>退出：</b>左上角 ← 按钮随时返回
-    </div>
-    <button id="fullscreen-btn">⛶ 全屏游玩</button>
     <div class="grid" id="grid"></div>
   </div>
 
@@ -262,7 +234,6 @@
     <div class="topbar">
       <button id="back" aria-label="返回">‹</button>
       <span id="cat-label"></span>
-      <span id="played-count">0 个</span>
     </div>
     <div id="word-wrap">
       <div id="word"></div>
@@ -353,7 +324,6 @@ const gameEl = document.getElementById("game");
 const gridEl = document.getElementById("grid");
 const wordEl = document.getElementById("word");
 const catLabelEl = document.getElementById("cat-label");
-const playedEl = document.getElementById("played-count");
 
 /* ================= 首页渲染 ================= */
 const randomCard = document.createElement("button");
@@ -381,17 +351,12 @@ randomCard.addEventListener("click", () => {
 /* ================= 游戏逻辑 ================= */
 let deck = [];
 let deckIndex = 0;
-let playedCount = 0;
 
 function startGame(cat) {
   deck = shuffle(cat.words);
   deckIndex = 0;
-  playedCount = 0;
   gameEl.style.background = cat.gradient;
-  /* 同步 body 背景，保证 iOS 全屏底部 Home Indicator 安全区与游戏背景连续 */
-  document.body.style.background = cat.gradient;
   catLabelEl.textContent = cat.emoji + " " + cat.name;
-  updatePlayed();
   showWord(true);
   homeEl.classList.add("hidden");
   gameEl.classList.remove("hidden");
@@ -403,8 +368,6 @@ function nextWord() {
     deck = shuffle(deck);
     deckIndex = 0;
   }
-  playedCount++;
-  updatePlayed();
   showWord(false);
 }
 
@@ -436,106 +399,11 @@ function fitWord(w) {
   wordEl.style.fontSize = size + "vmin";
 }
 
-function updatePlayed() {
-  playedEl.textContent = playedCount + " 个";
-}
-
-/* ================= 全屏 ================= */
-const fullscreenBtn = document.getElementById("fullscreen-btn");
-
-/* 判断是否为 iOS 设备（iPhone / iPad） */
-function isIOS() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-}
-/* 判断是否已以独立 Web App（添加到主屏幕）方式运行，此时已天然全屏 */
-function isStandalone() {
-  return window.navigator.standalone === true ||
-    window.matchMedia("(display-mode: standalone)").matches;
-}
-
-function isFullscreen() {
-  return document.fullscreenElement ||
-    document.webkitFullscreenElement ||
-    document.mozFullScreenElement ||
-    document.msFullscreenElement;
-}
-
-function exitFullscreen() {
-  if (document.exitFullscreen) document.exitFullscreen();
-  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-  else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-  else if (document.msExitFullscreen) document.msExitFullscreen();
-}
-
-function requestFullscreen() {
-  const el = document.documentElement;
-  let p = null;
-  if (el.requestFullscreen) p = el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) p = el.webkitRequestFullscreen();
-  else if (el.mozRequestFullScreen) p = el.mozRequestFullScreen();
-  else if (el.msRequestFullscreen) p = el.msRequestFullscreen();
-  if (p && p.catch) p.catch(function(){});
-}
-
-function toggleFullscreen() {
-  if (isFullscreen()) {
-    exitFullscreen();
-  } else {
-    requestFullscreen();
-  }
-}
-
-function updateFullscreenBtn() {
-  fullscreenBtn.textContent = isFullscreen() ? "↔ 退出全屏" : "⛶ 全屏游玩";
-}
-
-fullscreenBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  toggleFullscreen();
-});
-
-document.addEventListener("fullscreenchange", updateFullscreenBtn);
-document.addEventListener("webkitfullscreenchange", updateFullscreenBtn);
-document.addEventListener("mozfullscreenchange", updateFullscreenBtn);
-document.addEventListener("MSFullscreenChange", updateFullscreenBtn);
-
-/* 首次用户手势时尝试自动进入全屏（浏览器要求全屏必须由用户手势触发） */
-window.addEventListener("touchstart", function onFirstTouch() {
-  if (!isIOS() && !isFullscreen() && !sessionStorage.getItem("fullscreen-shown")) {
-    requestFullscreen();
-    sessionStorage.setItem("fullscreen-shown", "1");
-  }
-  window.removeEventListener("touchstart", onFirstTouch);
-});
-
-/* iOS 适配：Safari 不支持页面级全屏，改用「添加到主屏幕」提示。
-   若已以独立 Web App 运行则隐藏全屏按钮。 */
-(function iosFullscreenAdapt() {
-  if (isStandalone()) {
-    fullscreenBtn.style.display = "none";
-    return;
-  }
-  if (isIOS()) {
-    fullscreenBtn.innerHTML = "🍎 添加主屏幕 · 全屏游玩";
-    fullscreenBtn.addEventListener("click", function showIosGuide(e) {
-      e.stopPropagation();
-      fullscreenBtn.innerHTML = "点击 Safari 底部「分享」➜「添加到主屏幕」";
-      clearTimeout(fullscreenBtn._timer);
-      fullscreenBtn._timer = setTimeout(function () {
-        fullscreenBtn.innerHTML = "🍎 添加主屏幕 · 全屏游玩";
-      }, 3000);
-    });
-  }
-})();
-
 /* ================= 事件 ================= */
 document.getElementById("back").addEventListener("click", (e) => {
   e.stopPropagation();
   gameEl.classList.add("hidden");
   homeEl.classList.remove("hidden");
-  /* 返回首页时恢复 body 背景为首页渐变 */
-  document.body.style.background = "";
 });
 
 gameEl.addEventListener("click", nextWord);
