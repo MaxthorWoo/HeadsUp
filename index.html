@@ -17,7 +17,11 @@
     user-select: none;
   }
 
-  body { background: #12101f; }
+  /* body 背景与首页渐变一致，作为 iOS 全屏/独立 Web App 模式下
+     底部 Home Indicator 安全区漏出区域的兜底色，保证视觉连续填满 */
+  body {
+    background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  }
 
   .screen {
     position: fixed;
@@ -384,6 +388,8 @@ function startGame(cat) {
   deckIndex = 0;
   playedCount = 0;
   gameEl.style.background = cat.gradient;
+  /* 同步 body 背景，保证 iOS 全屏底部 Home Indicator 安全区与游戏背景连续 */
+  document.body.style.background = cat.gradient;
   catLabelEl.textContent = cat.emoji + " " + cat.name;
   updatePlayed();
   showWord(true);
@@ -528,6 +534,8 @@ document.getElementById("back").addEventListener("click", (e) => {
   e.stopPropagation();
   gameEl.classList.add("hidden");
   homeEl.classList.remove("hidden");
+  /* 返回首页时恢复 body 背景为首页渐变 */
+  document.body.style.background = "";
 });
 
 gameEl.addEventListener("click", nextWord);
