@@ -437,6 +437,17 @@ function updatePlayed() {
 /* ================= 全屏 ================= */
 const fullscreenBtn = document.getElementById("fullscreen-btn");
 
+/* 判断是否为 iOS 设备（iPhone / iPad） */
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+/* 判断是否已以独立 Web App（添加到主屏幕）方式运行，此时已天然全屏 */
+function isStandalone() {
+  return window.navigator.standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches;
+}
+
 function isFullscreen() {
   return document.fullscreenElement ||
     document.webkitFullscreenElement ||
@@ -485,12 +496,32 @@ document.addEventListener("MSFullscreenChange", updateFullscreenBtn);
 
 /* 首次用户手势时尝试自动进入全屏（浏览器要求全屏必须由用户手势触发） */
 window.addEventListener("touchstart", function onFirstTouch() {
-  if (!isFullscreen() && !sessionStorage.getItem("fullscreen-shown")) {
+  if (!isIOS() && !isFullscreen() && !sessionStorage.getItem("fullscreen-shown")) {
     requestFullscreen();
     sessionStorage.setItem("fullscreen-shown", "1");
   }
   window.removeEventListener("touchstart", onFirstTouch);
 });
+
+/* iOS 适配：Safari 不支持页面级全屏，改用「添加到主屏幕」提示。
+   若已以独立 Web App 运行则隐藏全屏按钮。 */
+(function iosFullscreenAdapt() {
+  if (isStandalone()) {
+    fullscreenBtn.style.display = "none";
+    return;
+  }
+  if (isIOS()) {
+    fullscreenBtn.innerHTML = "🍎 添加主屏幕 · 全屏游玩";
+    fullscreenBtn.addEventListener("click", function showIosGuide(e) {
+      e.stopPropagation();
+      fullscreenBtn.innerHTML = "点击 Safari 底部「分享」➜「添加到主屏幕」";
+      clearTimeout(fullscreenBtn._timer);
+      fullscreenBtn._timer = setTimeout(function () {
+        fullscreenBtn.innerHTML = "🍎 添加主屏幕 · 全屏游玩";
+      }, 3000);
+    });
+  }
+})();
 
 /* ================= 事件 ================= */
 document.getElementById("back").addEventListener("click", (e) => {
