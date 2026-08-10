@@ -1,0 +1,426 @@
+bplist00�_WebMainResource_WebSubframeArchives_WebSubresources�	
+_WebResourceData_WebResourceFrameName_WebResourceMIMEType_WebResourceTextEncodingName^WebResourceURLOD�<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Heads Up!</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body { background: #12101f; }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    transition: opacity .25s ease;
+    touch-action: manipulation;
+  }
+  .screen.hidden { display: none; }
+
+  /* ============ 首页 ============ */
+  #home {
+    background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    padding: calc(env(safe-area-inset-top) + 40px) 20px calc(env(safe-area-inset-bottom) + 30px);
+    overflow-y: auto;
+  }
+  #home .title {
+    text-align: center;
+    color: #fff;
+  }
+  #home .title h1 {
+    font-size: 9vh;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 30px rgba(0,0,0,.5);
+    background: linear-gradient(90deg, #ffd86f, #fc6262, #a18cd1, #ffd86f);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 6s linear infinite;
+  }
+  @keyframes shine {
+    0% { background-position: 0% 0; }
+    100% { background-position: 300% 0; }
+  }
+  #home .title p {
+    margin-top: 8px;
+    font-size: 14px;
+    color: rgba(255,255,255,.75);
+    font-weight: 500;
+  }
+  #home .howto {
+    margin: 18px auto 22px;
+    max-width: 520px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    padding: 12px 16px;
+    color: rgba(255,255,255,.9);
+    font-size: 13px;
+    line-height: 1.9;
+    text-align: center;
+    backdrop-filter: blur(6px);
+  }
+  #home .howto b { color: #ffd86f; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .card {
+    position: relative;
+    border: none;
+    border-radius: 18px;
+    padding: 22px 10px 16px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    transition: transform .15s ease;
+    aspect-ratio: 1 / 1;
+  }
+  .card:active { transform: scale(.94); }
+  .card .emoji { font-size: 34px; line-height: 1; }
+  .card .name { font-size: 18px; font-weight: 800; letter-spacing: 1px; text-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  .card .count { font-size: 11px; opacity: .85; font-weight: 500; }
+  .card.random {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    grid-column: 1 / -1;
+    aspect-ratio: auto;
+    padding: 20px;
+    flex-direction: row;
+    gap: 12px;
+  }
+  .card.random .emoji { font-size: 30px; }
+  .card.random .name { font-size: 22px; }
+
+  /* ============ 游戏页 ============ */
+  #game {
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    padding: calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 24px);
+  }
+  #game .topbar {
+    position: absolute;
+    top: calc(env(safe-area-inset-top) + 14px);
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px;
+    pointer-events: none;
+  }
+  #back {
+    pointer-events: auto;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.4);
+    background: rgba(0,0,0,.25);
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+  }
+  #back:active { transform: scale(.9); }
+  #cat-label {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,.92);
+    background: rgba(0,0,0,.22);
+    padding: 6px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    text-shadow: 0 1px 4px rgba(0,0,0,.4);
+  }
+  #played-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,255,255,.95);
+    background: rgba(0,0,0,.22);
+    padding: 6px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+    text-shadow: 0 1px 4px rgba(0,0,0,.4);
+    min-width: 58px;
+    text-align: center;
+  }
+
+  #word-wrap { display: flex; justify-content: center; align-items: center; width: 100%; }
+  #word {
+    color: #fff;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-align: center;
+    line-height: 1.3;
+    text-shadow:
+      0 2px 0 rgba(0,0,0,.18),
+      0 6px 24px rgba(0,0,0,.4);
+    transition: opacity .18s ease, transform .18s ease;
+    max-width: 92%;
+    word-break: break-all;
+  }
+  #word.out { opacity: 0; transform: translateY(-24px) scale(.92); }
+  #word.in { opacity: 0; transform: translateY(24px) scale(.92); }
+
+  #hint {
+    position: absolute;
+    bottom: calc(env(safe-area-inset-bottom) + 22px);
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,.85);
+    text-shadow: 0 1px 6px rgba(0,0,0,.4);
+    letter-spacing: 1px;
+    pointer-events: none;
+  }
+
+  @media (orientation: landscape) {
+    #home .grid { grid-template-columns: repeat(4, 1fr); max-width: 900px; }
+    #home { padding-top: calc(env(safe-area-inset-top) + 24px); }
+    #home .title h1 { font-size: 8vh; }
+    .card { aspect-ratio: 4 / 3; }
+    .card.random { grid-column: 1 / -1; aspect-ratio: auto; }
+    #word { letter-spacing: 1px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ============ 首页 ============ -->
+  <div id="home" class="screen">
+    <div class="title">
+      <h1>Heads Up!</h1>
+      <p>举着手机 · 你说我猜 · 换词不停</p>
+    </div>
+    <div class="howto">
+      <b>玩法：</b>手机屏幕朝外举在额头上<br>
+      <b>换词：</b>点击 / 双击屏幕任意处<br>
+      <b>退出：</b>左上角 ← 按钮随时返回
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- ============ 游戏页 ============ -->
+  <div id="game" class="screen hidden">
+    <div class="topbar">
+      <button id="back" aria-label="返回">‹</button>
+      <span id="cat-label"></span>
+      <span id="played-count">0 个</span>
+    </div>
+    <div id="word-wrap">
+      <div id="word"></div>
+    </div>
+    <div id="hint">点击屏幕换下一个词</div>
+  </div>
+
+<script>
+"use strict";
+
+/* ================= 词库 ================= */
+const CATEGORIES = [
+  {
+    name: "动物",
+    emoji: "🐾",
+    gradient: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+    words: ["袋鼠","企鹅","骆驼","河马","长颈鹿","大熊猫","北极熊","海豚","章鱼","乌龟","青蛙","变色龙","鹦鹉","蝙蝠","刺猬","松鼠","螃蟹","鲨鱼","鲸鱼","恐龙","斑马","猴子","狮子","大象","孔雀","蜻蜓","蜜蜂","蚂蚁","蜗牛","蛇","老鹰","猫头鹰","考拉","火烈鸟","水母","海豹","公鸡","鸭子","天鹅","鸽子","蝴蝶","老虎","豹子","狼","狐狸","鳄鱼","蜥蜴","壁虎","仓鼠","金鱼","海马","海星","鸵鸟","犀牛","豪猪","绵羊"]
+  },
+  {
+    name: "食物饮料",
+    emoji: "🍔",
+    gradient: "linear-gradient(135deg, #f83600 0%, #f9d423 100%)",
+    words: ["火锅","麻辣烫","煎饼果子","烤串","奶茶","豆浆油条","小笼包","饺子","拉面","寿司","披萨","汉堡","薯条","冰淇淋","臭豆腐","螺蛳粉","蛋炒饭","宫保鸡丁","北京烤鸭","糖葫芦","珍珠奶茶","咖啡","凉皮","烧烤","粽子","月饼","汤圆","酸辣粉","肉夹馍","肠粉","热干面","担担面","椰子鸡","关东煮","章鱼烧","炸酱面","馄饨","生煎包","烧麦","煲仔饭","酸菜鱼","烤鱼","炸鸡","白切鸡","辣条","爆米花","棉花糖","驴打滚","咸鸭蛋","皮蛋","豆腐脑","葱油饼","蛋挞","马卡龙","提拉米苏"]
+  },
+  {
+    name: "影视",
+    emoji: "🎬",
+    gradient: "linear-gradient(135deg, #7F00FF 0%, #E100FF 100%)",
+    words: ["超人","蜘蛛侠","钢铁侠","哆啦A梦","蜡笔小新","海绵宝宝","哈利波特","甄嬛传","武林外传","西游记","还珠格格","大话西游","泰坦尼克号","阿凡达","变形金刚","复仇者联盟","名侦探柯南","千与千寻","疯狂动物城","功夫熊猫","星球大战","007","权力的游戏","老友记","琅琊榜","亮剑","白蛇传","奥特曼","喜羊羊","家有儿女","流浪地球","战狼","长津湖","蝙蝠侠","美国队长","绿巨人","金刚狼","死侍","侏罗纪公园","哥斯拉","ET外星人","狮子王","冰雪奇缘","玩具总动员","小黄人","神偷奶爸","寻梦环游记","黑客帝国","终结者","碟中谍","速度与激情","猫和老鼠","米老鼠","熊出没","小猪佩奇"]
+  },
+  {
+    name: "名人角色",
+    emoji: "⭐",
+    gradient: "linear-gradient(135deg, #F2994A 0%, #F2C94C 100%)",
+    words: ["马化腾","马云","刘德华","周杰伦","林黛玉","孙悟空","猪八戒","李白","杜甫","曹操","诸葛亮","关羽","葫芦娃","哪吒","孔子","屈原","贝多芬","爱因斯坦","特斯拉","乔布斯","马斯克","梅西","姚明","成龙","鲁迅","杨过","小龙女","鲁智深","唐僧","白娘子","灰姑娘","白雪公主","美人鱼","刘备","张飞","貂蝉","李小龙","周星驰","张学友","王菲","邓丽君","张国荣","李连杰","吴京","黄渤","沈腾","武则天","秦始皇","刘邦","项羽","岳飞","包青天","苏东坡","李清照","赵云","沙僧"]
+  },
+  {
+    name: "日常物品",
+    emoji: "🏠",
+    gradient: "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)",
+    words: ["雨伞","眼镜","剪刀","遥控器","充电器","保温杯","行李箱","枕头","牙膏","洗衣机","微波炉","冰箱","台灯","插座","路由器","WiFi","手机","平板","笔记本电脑","耳机","充电宝","数据线","电风扇","空调","扫帚","拖把","衣架","纸巾","钥匙","钱包","电动车","电梯","镜子","牙刷","浴缸","加湿器","空气净化器","投影仪","吸尘器","扫地机器人","榨汁机","电饭煲","电磁炉","高压锅","洗碗机","马桶","沙发","茶几","吹风机","剃须刀","口红","香水","戒指","项链","围巾"]
+  },
+  {
+    name: "国家城市",
+    emoji: "🌍",
+    gradient: "linear-gradient(135deg, #02AAB0 0%, #00CDAC 100%)",
+    words: ["北京","上海","广州","深圳","成都","西安","重庆","杭州","西藏","新疆","内蒙古","日本","美国","英国","法国","意大利","西班牙","澳大利亚","埃及","巴西","加拿大","俄罗斯","韩国","泰国","马尔代夫","迪拜","巴黎","纽约","伦敦","东京","悉尼","罗马","威尼斯","夏威夷","南极","天津","南京","苏州","武汉","长沙","青岛","厦门","昆明","哈尔滨","香港","澳门","德国","荷兰","瑞士","新加坡","印度","土耳其","希腊","冰岛","南非"]
+  },
+  {
+    name: "体育运动",
+    emoji: "🏅",
+    gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+    words: ["世界杯","奥运会","篮球","足球","乒乓球","羽毛球","网球","排球","高尔夫","棒球","冰球","跳水","体操","举重","马拉松","百米冲刺","接力赛","跳高","跳远","铅球","击剑","柔道","拳击","摔跤","赛车","帆船","攀岩","滑板","滑雪","花样滑冰","射击","射箭","马术","蹦床","拔河","游泳","短跑","长跑","跨栏","铁人三项","竞走","标枪","撑竿跳","平衡木","艺术体操","花样游泳","水球","皮划艇","轮滑","冰壶","壁球","板球","橄榄球","台球","保龄球"]
+  },
+  {
+    name: "职业身份",
+    emoji: "💼",
+    gradient: "linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)",
+    words: ["CEO","DJ","VIP","PPT","UFO","GPS","ATM","BBQ","打工人","干饭人","卷王","柠檬精","程序员","产品经理","设计师","主播","网红","UP主","博主","外卖小哥","快递员","代购","微商","网约车司机","护士","医生","律师","会计","记者","厨师","理发师","健身教练","电竞选手","摄影师","模特","空姐","飞行员","兽医","牙医","咖啡师","调酒师","美甲师","代驾","幼师","保安","前台","销售","银行家","企业家","科学家","宇航员","警察","消防员","老师","公务员"]
+  },
+  {
+    name: "乐器音乐",
+    emoji: "🎵",
+    gradient: "linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)",
+    words: ["钢琴","小提琴","吉他","古筝","二胡","唢呐","萨克斯","架子鼓","口琴","手风琴","琵琶","笛子","箫","扬琴","大提琴","中提琴","竖琴","长笛","单簧管","双簧管","小号","大号","圆号","长号","电吉他","贝斯","尤克里里","非洲鼓","锣","钹","木鱼","铃铛","三角铁","沙锤","镲","古琴","箜篌","马头琴","冬不拉","手鼓","陶笛","埙","排箫","葫芦丝","笙","电子琴","留声机","唱片机","拨浪鼓","双响筒","风琴","管风琴","口风琴","卡林巴","拇指琴"]
+  },
+  {
+    name: "交通工具",
+    emoji: "🚀",
+    gradient: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    words: ["高铁","地铁","挖掘机","热气球","潜水艇","航空母舰","火箭","飞机","直升机","公交车","出租车","自行车","摩托车","卡车","消防车","救护车","警车","吊车","压路机","搅拌车","房车","面包车","小轿车","跑车","敞篷车","越野车","皮卡车","火车","绿皮火车","磁悬浮列车","动车","轻轨","有轨电车","渡轮","游轮","快艇","渔船","货轮","油轮","破冰船","气垫船","飞船","飞碟","无人机","滑翔伞","降落伞","飞艇","太空站","月球车","坦克","装甲车","独木舟","竹筏","三轮车","叉车"]
+  }
+];
+
+/* ================= 工具 ================= */
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/* ================= DOM ================= */
+const homeEl = document.getElementById("home");
+const gameEl = document.getElementById("game");
+const gridEl = document.getElementById("grid");
+const wordEl = document.getElementById("word");
+const catLabelEl = document.getElementById("cat-label");
+const playedEl = document.getElementById("played-count");
+
+/* ================= 首页渲染 ================= */
+const randomCard = document.createElement("button");
+randomCard.className = "card random";
+randomCard.innerHTML = '<span class="emoji">🎲</span><span class="name">随机开玩</span>';
+gridEl.appendChild(randomCard);
+
+CATEGORIES.forEach(cat => {
+  const btn = document.createElement("button");
+  btn.className = "card";
+  btn.style.background = cat.gradient;
+  btn.innerHTML =
+    '<span class="emoji">' + cat.emoji + "</span>" +
+    '<span class="name">' + cat.name + "</span>" +
+    '<span class="count">' + cat.words.length + " 个词</span>";
+  btn.addEventListener("click", () => startGame(cat));
+  gridEl.appendChild(btn);
+});
+
+randomCard.addEventListener("click", () => {
+  const cat = CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)];
+  startGame(cat);
+});
+
+/* ================= 游戏逻辑 ================= */
+let deck = [];
+let deckIndex = 0;
+let playedCount = 0;
+
+function startGame(cat) {
+  deck = shuffle(cat.words);
+  deckIndex = 0;
+  playedCount = 0;
+  gameEl.style.background = cat.gradient;
+  catLabelEl.textContent = cat.emoji + " " + cat.name;
+  updatePlayed();
+  showWord(true);
+  homeEl.classList.add("hidden");
+  gameEl.classList.remove("hidden");
+}
+
+function nextWord() {
+  deckIndex++;
+  if (deckIndex >= deck.length) {
+    deck = shuffle(deck);
+    deckIndex = 0;
+  }
+  playedCount++;
+  updatePlayed();
+  showWord(false);
+}
+
+function showWord(instant) {
+  wordEl.classList.add("out");
+  window.setTimeout(() => {
+    wordEl.textContent = deck[deckIndex];
+    fitWord(deck[deckIndex]);
+    if (instant) {
+      wordEl.classList.remove("out");
+    } else {
+      wordEl.classList.remove("out");
+      wordEl.classList.add("in");
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        wordEl.classList.remove("in");
+      }));
+    }
+  }, instant ? 0 : 160);
+}
+
+function fitWord(w) {
+  const len = w.length;
+  let size;
+  if (len <= 2) size = 26;
+  else if (len <= 4) size = 19;
+  else if (len <= 6) size = 15;
+  else if (len <= 8) size = 12;
+  else size = 10;
+  wordEl.style.fontSize = size + "vmin";
+}
+
+function updatePlayed() {
+  playedEl.textContent = playedCount + " 个";
+}
+
+/* ================= 事件 ================= */
+document.getElementById("back").addEventListener("click", (e) => {
+  e.stopPropagation();
+  gameEl.classList.add("hidden");
+  homeEl.classList.remove("hidden");
+});
+
+gameEl.addEventListener("click", nextWord);
+</script>
+</body>
+</html>
+PYtext/htmlUUTF-8_$http://localhost/heads-up/index.html��   ! 7 I T f } � � �E�E�E�E�E�E�                           E�
