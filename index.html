@@ -9,20 +9,21 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+  /* 用 100dvh（动态视口高度）作为高度基准，让页面覆盖整个物理屏幕，
+     包括底部 Home Indicator 安全区。100dvh 会随 iOS 浏览器 UI 变化，
+     在全屏/独立 Web App 模式下等于物理屏高度，从而让背景铺满到底。 */
   html, body {
     height: 100%;
+    min-height: 100dvh;
     overflow: hidden;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
     -webkit-user-select: none;
     user-select: none;
   }
 
-  /* 关键：iOS 中 background-image（渐变）只绘制在元素盒内，不会延伸到底部
-     Home Indicator 安全区；而 background-color（纯色）会铺满整个画布（含安全区）。
-     因此同时设置 background-image（主体渐变）+ background-color（渐变末尾色）：
-     安全区显示与渐变底部一致的纯色兜底，视觉无缝衔接。 */
+  /* 背景同时设置 background-image（渐变）与 background-color（渐变末尾色）：
+     渐变用于主体显示，纯色兜底确保底部安全区即使超出渐变绘制范围也被填充。 */
   html {
-    height: 100%;
     background-image: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
     background-color: #24243e;
   }
@@ -220,7 +221,7 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.1.5</p>
+      <p class="version">v1.1.6</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
