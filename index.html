@@ -9,34 +9,53 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  /* 用 100dvh（动态视口高度）作为高度基准，让页面覆盖整个物理屏幕，
-     包括底部 Home Indicator 安全区。100dvh 会随 iOS 浏览器 UI 变化，
-     在全屏/独立 Web App 模式下等于物理屏高度，从而让背景铺满到底。 */
-  html, body {
+  /* html/body 只作为页面容器，不负责动态背景。
+     背景统一由 #app-background 全屏层负责。
+     overflow: hidden 只放在 html 上（裁剪到物理屏边界），
+     body 不裁剪子元素，否则会裁掉 #app-background 为覆盖 safe-area 的 overscan。 */
+  html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
     height: 100%;
-    min-height: 100dvh;
     overflow: hidden;
+    overscroll-behavior: none;
+    background: #000;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overscroll-behavior: none;
+    position: fixed;
+    inset: 0;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
     -webkit-user-select: none;
     user-select: none;
   }
 
-  /* 背景：垂直渐变（to bottom）+ 末尾色兜底。
-     注意：必须用垂直渐变。斜向渐变在屏幕底部边缘各横向位置颜色不一，
-     与安全区的纯色兜底（末尾色）在接缝处会产生色差，形成可见"方块"。
-     垂直渐变保证视口底部整行都是末尾色，与 background-color 无缝衔接。 */
-  html {
-    background-image: linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%);
-    background-color: #24243e;
-  }
-  body {
-    background-image: linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%);
-    background-color: #24243e;
+  /* 全屏背景层：永远覆盖整个 viewport / safe-area，不允许避让任何安全区。
+     通过 JS 测量真实 viewport 高度写入 --app-height，并做 2px overscan
+     避免旋转后边缘漏色。 */
+  #app-background {
+    position: fixed;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    height: calc(var(--app-height, 100dvh) + 4px);
+    z-index: 0;
+    pointer-events: none;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
   }
 
+  /* 页面 UI 层：位于背景层之上，负责内容显示 */
   .screen {
     position: fixed;
     inset: 0;
+    z-index: 1;
     background: transparent;
     display: flex;
     flex-direction: column;
@@ -47,7 +66,7 @@
 
   /* ============ 首页 ============ */
   #home {
-    /* 背景透明，透出 html 层渐变，保证与底部安全区无缝衔接 */
+    /* UI 层背景透明，透出 #app-background 全屏背景；padding 仅用于内容避开 safe-area */
     background: transparent;
     padding: calc(env(safe-area-inset-top) + 40px) 20px calc(env(safe-area-inset-bottom) + 30px);
     overflow-y: auto;
@@ -208,8 +227,18 @@
   }
 
   @media (orientation: landscape) {
+    /* 横屏时 Home Indicator 位于屏幕左右侧，UI 内容需避让 safe-area，
+       但 #app-background 背景层始终覆盖全屏（overscan），不参与避让 */
     #home .grid { max-width: 900px; }
-    #home { padding-top: calc(env(safe-area-inset-top) + 24px); }
+    #home {
+      padding-top: calc(env(safe-area-inset-top) + 24px);
+      padding-left: max(20px, env(safe-area-inset-left));
+      padding-right: max(20px, env(safe-area-inset-right));
+    }
+    #game {
+      padding-left: max(20px, env(safe-area-inset-left));
+      padding-right: max(20px, env(safe-area-inset-right));
+    }
     #home .title h1 { font-size: 8vh; }
     .card { aspect-ratio: 4 / 3; width: calc(25% - 10.5px); flex: 0 0 calc(25% - 10.5px); }
     .card.random { width: 100%; flex: 1 1 100%; aspect-ratio: auto; }
@@ -219,11 +248,14 @@
 </head>
 <body>
 
+  <!-- 全屏背景层：承载所有渐变背景，覆盖整个物理屏幕（含 safe-area） -->
+  <div id="app-background"></div>
+
   <!-- ============ 首页 ============ -->
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.1.7</p>
+      <p class="version">v1.1.8</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -353,28 +385,50 @@ randomCard.addEventListener("click", () => {
   startGame(null, shuffle(all));
 });
 
-/* ================= 游戏逻辑 ================= */
-let deck = [];
-let deckIndex = 0;
+/* ================= 背景层 ================= */
+const appBg = document.getElementById("app-background");
 
-/* 从渐变字符串中提取 100% 位置的颜色，作为底部安全区兜底色 */
-function gradientFallback(gradient) {
-  const m = gradient.match(/#[0-9a-fA-F]{3,6}\s+100%/i);
-  if (m) return m[0].trim().split(/\s+/)[0];
-  const colors = gradient.match(/#[0-9a-fA-F]{3,6}/gi);
-  return colors ? colors[colors.length - 1] : "#24243e";
-}
+/* 首页默认渐变背景 */
+const HOME_GRADIENT = "linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%)";
 
-/* 同步背景到 html/body：
-   - background-image 为渐变（主体显示）
-   - background-color 为渐变末尾色（铺满画布，兜底底部 Home Indicator 安全区） */
+/* 统一由 #app-background 层负责全部背景，html/body 不再承载背景 */
 function setScreenBg(gradient) {
-  const fallback = gradientFallback(gradient);
-  document.documentElement.style.backgroundImage = gradient;
-  document.documentElement.style.backgroundColor = fallback;
-  document.body.style.backgroundImage = gradient;
-  document.body.style.backgroundColor = fallback;
+  if (!appBg) return;
+  appBg.style.background = gradient;
 }
+
+/* ================= Viewport 尺寸管理 ================= */
+/* 测量真实 viewport 高度并写入 --app-height，供 #app-background 使用。
+   优先取能覆盖更大区域的值，宁可背景略微超出 viewport 也不露出漏色。 */
+function updateViewportSize() {
+  const heights = [
+    window.innerHeight,
+    document.documentElement.clientHeight,
+    window.visualViewport ? window.visualViewport.height : 0
+  ];
+  const height = Math.max.apply(null, heights);
+  document.documentElement.style.setProperty("--app-height", Math.ceil(height) + "px");
+}
+
+/* 用 rAF 节流，避免一次旋转触发大量同步布局导致抖动 */
+let viewportRaf = null;
+function scheduleViewportUpdate() {
+  if (viewportRaf) cancelAnimationFrame(viewportRaf);
+  viewportRaf = requestAnimationFrame(function () {
+    viewportRaf = null;
+    updateViewportSize();
+  });
+}
+
+updateViewportSize();
+window.addEventListener("resize", scheduleViewportUpdate);
+window.addEventListener("orientationchange", scheduleViewportUpdate);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", scheduleViewportUpdate);
+}
+
+/* 初始化首页背景 */
+setScreenBg(HOME_GRADIENT);
 
 function startGame(cat, customDeck) {
   if (customDeck) {
@@ -439,9 +493,8 @@ document.getElementById("back").addEventListener("click", (e) => {
   e.stopPropagation();
   gameEl.classList.add("hidden");
   homeEl.classList.remove("hidden");
-  /* 返回首页时清除内联背景，恢复 CSS 默认的首页渐变 + 兜底色 */
-  document.documentElement.style.background = "";
-  document.body.style.background = "";
+  /* 返回首页时恢复首页渐变背景 */
+  setScreenBg(HOME_GRADIENT);
 });
 
 gameEl.addEventListener("click", nextWord);
