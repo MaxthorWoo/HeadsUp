@@ -10,41 +10,30 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   /* html/body 只作为页面容器，不负责动态背景。
-     背景统一由 #app-background 全屏层负责。
-     overflow: hidden 只放在 html 上（裁剪到物理屏边界），
-     body 不裁剪子元素，否则会裁掉 #app-background 为覆盖 safe-area 的 overscan。 */
-  html {
+     背景统一由 #app-background 全屏层负责。 */
+  html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
-    background: #000;
-  }
-  body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overscroll-behavior: none;
-    position: fixed;
-    inset: 0;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
     -webkit-user-select: none;
     user-select: none;
   }
+  html { background: #000; }
 
   /* 全屏背景层：永远覆盖整个 viewport / safe-area，不允许避让任何安全区。
      通过 JS 测量真实 viewport 高度写入 --app-height，并做 2px overscan
-     避免旋转后边缘漏色。 */
+     避免旋转后边缘漏色。z-index: -1 置于所有内容之下，pointer-events: none 不拦截点击。 */
   #app-background {
     position: fixed;
     top: -2px;
     left: -2px;
     right: -2px;
     height: calc(var(--app-height, 100dvh) + 4px);
-    z-index: 0;
+    z-index: -1;
     pointer-events: none;
     background-position: center;
     background-size: cover;
@@ -55,7 +44,6 @@
   .screen {
     position: fixed;
     inset: 0;
-    z-index: 1;
     background: transparent;
     display: flex;
     flex-direction: column;
@@ -255,7 +243,7 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.1.8</p>
+      <p class="version">v1.1.9</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -399,7 +387,10 @@ function setScreenBg(gradient) {
 
 /* ================= Viewport 尺寸管理 ================= */
 /* 测量真实 viewport 高度并写入 --app-height，供 #app-background 使用。
-   优先取能覆盖更大区域的值，宁可背景略微超出 viewport 也不露出漏色。 */
+   优先取能覆盖更大区域的值，宁可背景略微超出 viewport 也不露出漏色。
+   加入 lastHeight 缓存：只有当高度真正变化时才写入，避免 resize 事件
+   反复触发导致死循环（这正是页面冻结的根因之一）。 */
+let lastHeight = -1;
 function updateViewportSize() {
   const heights = [
     window.innerHeight,
@@ -407,7 +398,10 @@ function updateViewportSize() {
     window.visualViewport ? window.visualViewport.height : 0
   ];
   const height = Math.max.apply(null, heights);
-  document.documentElement.style.setProperty("--app-height", Math.ceil(height) + "px");
+  const rounded = Math.ceil(height);
+  if (rounded === lastHeight) return; // 值未变化，直接返回，打破可能的事件循环
+  lastHeight = rounded;
+  document.documentElement.style.setProperty("--app-height", rounded + "px");
 }
 
 /* 用 rAF 节流，避免一次旋转触发大量同步布局导致抖动 */
@@ -423,9 +417,6 @@ function scheduleViewportUpdate() {
 updateViewportSize();
 window.addEventListener("resize", scheduleViewportUpdate);
 window.addEventListener("orientationchange", scheduleViewportUpdate);
-if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", scheduleViewportUpdate);
-}
 
 /* 初始化首页背景 */
 setScreenBg(HOME_GRADIENT);
