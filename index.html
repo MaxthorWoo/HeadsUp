@@ -230,7 +230,7 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.4.0</p>
+      <p class="version">v1.4.1</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -437,14 +437,25 @@ function isIOSDevice() {
 function initHapticSwitch() {
   if (hapticLabel || !isIOSDevice()) return;
   try {
+    /* 用「透明 + 屏幕外绝对定位」而非 display:none，
+       部分 iOS 版本要求 switch 元素实际可交互，合成 click 才能触发 Taptic 反馈 */
     const input = document.createElement("input");
     input.type = "checkbox";
     input.setAttribute("switch", "");
-    input.style.display = "none";
+    input.id = "haptic-switch";
+    input.style.position = "fixed";
+    input.style.left = "-9999px";
+    input.style.top = "0";
+    input.style.opacity = "0";
+    /* 不能用 display:none 或 pointer-events:none，否则合成 click 可能不触发 Taptic 反馈；
+       元素在屏幕外（-9999px），不会被用户实际点到 */
     document.body.appendChild(input);
     const label = document.createElement("label");
-    label.htmlFor = input.id = "haptic-switch";
-    label.style.display = "none";
+    label.htmlFor = "haptic-switch";
+    label.style.position = "fixed";
+    label.style.left = "-9999px";
+    label.style.top = "0";
+    label.style.opacity = "0";
     document.body.appendChild(label);
     hapticLabel = label;
   } catch (e) { /* 忽略 */ }
