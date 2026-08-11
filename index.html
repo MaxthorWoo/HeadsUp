@@ -230,7 +230,7 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.3.2</p>
+      <p class="version">v1.4.0</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -419,7 +419,53 @@ function nextWord() {
     deckIndex = 0;
   }
   showWord(false);
+  /* 换词成功后触发手机震动反馈 */
+  vibrateSuccess();
 }
+
+/* ================= 换词成功震动反馈（兼容 iOS） ================= */
+/* iOS 上 navigator.vibrate 不可用，但 iOS 17.4+/Safari 18+ 原生对
+   <input type="checkbox" switch> 有 Taptic Engine 触觉反馈。
+   通过隐藏该 switch 元素并程序化点击其关联 label，可在 iOS 触发震动。 */
+let hapticLabel = null;
+
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
+function initHapticSwitch() {
+  if (hapticLabel || !isIOSDevice()) return;
+  try {
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.setAttribute("switch", "");
+    input.style.display = "none";
+    document.body.appendChild(input);
+    const label = document.createElement("label");
+    label.htmlFor = input.id = "haptic-switch";
+    label.style.display = "none";
+    document.body.appendChild(label);
+    hapticLabel = label;
+  } catch (e) { /* 忽略 */ }
+}
+
+/* 换词成功的震动反馈：
+   - iOS：通过隐藏 switch 的 label.click() 触发 Taptic Engine
+   - 其他设备：Vibration API（navigator.vibrate） */
+function vibrateSuccess() {
+  try {
+    if (hapticLabel) {
+      hapticLabel.click();
+      return;
+    }
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      navigator.vibrate(30);
+    }
+  } catch (e) { /* 忽略震动异常 */ }
+}
+
+initHapticSwitch();
 
 function showWord(instant) {
   wordEl.classList.add("out");
