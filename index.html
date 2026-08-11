@@ -230,7 +230,7 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.3.1</p>
+      <p class="version">v1.3.2</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -408,6 +408,8 @@ function startGame(cat, customDeck) {
   showWord(true);
   homeEl.classList.add("hidden");
   gameEl.classList.remove("hidden");
+  /* 进入游戏时请求陀螺仪权限（startGame 由用户点击卡片触发，属合法手势） */
+  grantShakeIfNeeded();
 }
 
 function nextWord() {
@@ -486,50 +488,73 @@ document.getElementById("back").addEventListener("click", (e) => {
 gameEl.addEventListener("click", nextWord);
 
 /* ================= 设备抖动（陀螺仪）换词 ================= */
-/* 用户主动点击/触摸任意处后，请求陀螺仪权限并开启抖动检测 */
+/* iOS 需要用户手势触发权限请求，返回 Promise */
 function requestMotionPermission() {
   try {
     if (typeof DeviceMotionEvent !== "undefined" &&
         typeof DeviceMotionEvent.requestPermission === "function") {
-      DeviceMotionEvent.requestPermission().then(function (res) {
-        if (res === "granted") startShakeDetection();
-      }).catch(function () {});
-    } else {
-      startShakeDetection();
+      return DeviceMotionEvent.requestPermission().then(function (res) {
+        return res === "granted";
+      }).catch(function () { return false; });
     }
-  } catch (e) { /* 不支持则忽略 */ }
+    return Promise.resolve(true);
+  } catch (e) {
+    return Promise.resolve(false);
+  }
 }
 
-function startShakeDetection() {
-  if (window._shakeBound) return;
-  window._shakeBound = true;
+/* 始终绑定 devicemotion 监听，不受权限状态阻塞。
+   若加速度数据不可用（iOS 未授权时可能为 null），在用户手势时重新请求权限。 */
+let shakeLast = null;
+let shakeLastTrigger = 0;
+let shakeGranted = false;
 
-  let lastX = 0, lastY = 0, lastZ = 0;
-  let lastTrigger = 0;
-
-  window.addEventListener("devicemotion", function (e) {
-    const a = e.accelerationIncludingGravity;
-    if (!a) return;
-    const ax = a.x || 0, ay = a.y || 0, az = a.z || 0;
-    const dx = ax - lastX, dy = ay - lastY, dz = az - lastZ;
-    lastX = ax; lastY = ay; lastZ = az;
-    /* 合加速度变化量，超过阈值视为一次明显晃动 */
+window.addEventListener("devicemotion", function (e) {
+  if (!shakeGranted) return; /* 未授权则不做检测 */
+  /* 优先用线性加速度 acceleration，fallback 到含重力的 accelerationIncludingGravity */
+  let ax = 0, ay = 0, az = 0;
+  if (e.acceleration && (e.acceleration.x !== null || e.acceleration.y !== null || e.acceleration.z !== null)) {
+    ax = e.acceleration.x || 0;
+    ay = e.acceleration.y || 0;
+    az = e.acceleration.z || 0;
+  } else if (e.accelerationIncludingGravity) {
+    ax = e.accelerationIncludingGravity.x || 0;
+    ay = e.accelerationIncludingGravity.y || 0;
+    az = e.accelerationIncludingGravity.z || 0;
+  }
+  if (shakeLast) {
+    const dx = ax - shakeLast.x, dy = ay - shakeLast.y, dz = az - shakeLast.z;
     const delta = Math.sqrt(dx * dx + dy * dy + dz * dz);
-    if (delta > 25) {
+    if (delta > 12) {
       const now = Date.now();
-      if (now - lastTrigger > 800) { /* 节流，防止连抖触发多次 */
-        lastTrigger = now;
+      if (now - shakeLastTrigger > 900) { /* 节流，防连抖 */
+        shakeLastTrigger = now;
         if (!gameEl.classList.contains("hidden")) {
           nextWord();
         }
       }
     }
-  }, false);
+  }
+  shakeLast = { x: ax, y: ay, z: az };
+}, false);
+
+/* 在用户交互手势中请求陀螺仪权限（iOS 必需），进入游戏时尤其重要 */
+function grantShakeIfNeeded() {
+  if (shakeGranted) return;
+  requestMotionPermission().then(function (ok) {
+    if (ok) {
+      shakeGranted = true;
+      shakeLast = null;
+    }
+  });
 }
 
-/* 在进入游戏时（点击卡片后）请求陀螺仪权限；若失败，下次任意触摸再尝试 */
+/* 首次任意点击/触摸时尝试授权（进入游戏前点击卡片也会触发） */
 window.addEventListener("click", function onMotionGrab() {
-  requestMotionPermission();
+  grantShakeIfNeeded();
+}, { once: true });
+window.addEventListener("touchend", function onMotionGrab2() {
+  grantShakeIfNeeded();
 }, { once: true });
 </script>
 </body>
