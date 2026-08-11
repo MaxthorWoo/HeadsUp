@@ -2,15 +2,17 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#24243e">
+<link rel="manifest" href="manifest.json">
 <title>Heads Up!</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  /* html/body 只作为页面容器，不负责动态背景。
-     背景统一由 #app-background 全屏层负责。 */
+  /* html/body 直接承载渐变背景，作为 root canvas 绘制。
+     不再依赖 fixed 背景层去覆盖 safe-area，完全交给 iOS 默认 viewport 管理。 */
   html, body {
     margin: 0;
     padding: 0;
@@ -18,33 +20,18 @@
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
+    background: linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%);
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
     -webkit-user-select: none;
     user-select: none;
   }
-  html { background: #000; }
 
-  /* 全屏背景层：用纯 CSS fixed + 四周 -4px overscan 覆盖整个 viewport / safe-area。
-     不依赖 JS / --app-height / dvh / vw，让 WebKit 自行决定 fixed containing block。
-     z-index: 0，UI 层在其上。pointer-events: none 不拦截点击。 */
-  #app-background {
-    position: fixed;
-    top: -4px;
-    right: -4px;
-    bottom: -4px;
-    left: -4px;
-    z-index: 0;
-    pointer-events: none;
-    background-position: center;
-    background-size: cover;
-    background-repeat: no-repeat;
-  }
-
-  /* 页面 UI 层：位于背景层之上（z-index: 1），负责内容显示 */
+  /* 页面布局层：absolute 覆盖视口，背景透明透出 html/body 渐变 */
   .screen {
-    position: fixed;
+    position: absolute;
     inset: 0;
-    z-index: 1;
+    width: 100%;
+    height: 100%;
     background: transparent;
     display: flex;
     flex-direction: column;
@@ -55,7 +42,7 @@
 
   /* ============ 首页 ============ */
   #home {
-    /* UI 层背景透明，透出 #app-background 全屏背景；padding 仅用于内容避开 safe-area */
+    /* UI 层背景透明，透出 html/body 渐变；padding 仅用于内容避开 safe-area */
     background: transparent;
     padding: calc(env(safe-area-inset-top) + 40px) 20px calc(env(safe-area-inset-bottom) + 30px);
     overflow-y: auto;
@@ -216,8 +203,8 @@
   }
 
   @media (orientation: landscape) {
-    /* 横屏时 Home Indicator 位于屏幕左右侧，UI 内容需避让 safe-area，
-       但 #app-background 背景层始终覆盖全屏（overscan），不参与避让 */
+    /* 横屏时 Home Indicator 位于屏幕左右侧，UI 内容需避让 safe-area；
+       html/body 渐变背景仍由 root canvas 绘制，不参与避让 */
     #home .grid { max-width: 900px; }
     #home {
       padding-top: calc(env(safe-area-inset-top) + 24px);
@@ -237,14 +224,11 @@
 </head>
 <body>
 
-  <!-- 全屏背景层：承载所有渐变背景，覆盖整个物理屏幕（含 safe-area） -->
-  <div id="app-background"></div>
-
   <!-- ============ 首页 ============ -->
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.1.11</p>
+      <p class="version">v1.1.12</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -378,17 +362,16 @@ randomCard.addEventListener("click", () => {
   startGame(null, shuffle(all));
 });
 
-/* ================= 背景层 ================= */
-const appBg = document.getElementById("app-background");
-
+/* ================= 背景 ================= */
 /* 首页默认渐变背景 */
 const HOME_GRADIENT = "linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%)";
 
-/* 统一由 #app-background 层负责全部背景，html/body 不再承载背景。
-   JS 不参与任何 viewport / layout / --app-height 管理，背景层纯 CSS fixed overscan。 */
+/* 直接把完整渐变同步到 html + body（root canvas），
+   不提取末尾色、不做纯色兜底、不操作任何独立背景层。
+   JS 不参与任何 viewport / layout 管理。 */
 function setScreenBg(gradient) {
-  if (!appBg) return;
-  appBg.style.background = gradient;
+  document.documentElement.style.background = gradient;
+  document.body.style.background = gradient;
 }
 
 /* 初始化首页背景 */

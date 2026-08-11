@@ -1,0 +1,8 @@
+{
+  "name": "Heads Up!",
+  "short_name": "Heads Up!",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#24243e",
+  "theme_color": "#24243e"
+}
