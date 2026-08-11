@@ -17,16 +17,18 @@
     user-select: none;
   }
 
-  /* 关键：背景统一放在 html 层。iOS 全屏/独立 Web App 模式下，html 元素的
-     背景会铺满整个物理屏幕（含底部 Home Indicator 安全区），
-     这样安全区不会露出突兀的纯色块，而是与页面背景无缝衔接。
-     实际屏幕背景通过 JS 同步到 html 与 body。 */
+  /* 关键：iOS 中 background-image（渐变）只绘制在元素盒内，不会延伸到底部
+     Home Indicator 安全区；而 background-color（纯色）会铺满整个画布（含安全区）。
+     因此同时设置 background-image（主体渐变）+ background-color（渐变末尾色）：
+     安全区显示与渐变底部一致的纯色兜底，视觉无缝衔接。 */
   html {
     height: 100%;
-    background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background-image: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background-color: #24243e;
   }
   body {
-    background: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background-image: linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background-color: #24243e;
   }
 
   .screen {
@@ -218,7 +220,7 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.1.4</p>
+      <p class="version">v1.1.5</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -338,10 +340,13 @@ CATEGORIES.forEach(cat => {
 });
 
 randomCard.addEventListener("click", () => {
-  /* 随机模式：把所有品类的所有词混合洗牌，每个词都可能来自任意品类 */
-  const all = CATEGORIES.reduce(function (acc, cat) {
-    return acc.concat(cat.words);
-  }, []);
+  /* 随机模式：把所有品类的所有词混合洗牌，每个词都携带所属品类的背景渐变 */
+  const all = [];
+  CATEGORIES.forEach(function (cat) {
+    cat.words.forEach(function (w) {
+      all.push({ word: w, gradient: cat.gradient });
+    });
+  });
   startGame(null, shuffle(all));
 });
 
@@ -349,24 +354,39 @@ randomCard.addEventListener("click", () => {
 let deck = [];
 let deckIndex = 0;
 
-/* 同步背景到 html/body，让渐变铺满整个物理屏幕（含底部 Home Indicator 安全区） */
+/* 从渐变字符串中提取 100% 位置的颜色，作为底部安全区兜底色 */
+function gradientFallback(gradient) {
+  const m = gradient.match(/#[0-9a-fA-F]{3,6}\s+100%/i);
+  if (m) return m[0].trim().split(/\s+/)[0];
+  const colors = gradient.match(/#[0-9a-fA-F]{3,6}/gi);
+  return colors ? colors[colors.length - 1] : "#24243e";
+}
+
+/* 同步背景到 html/body：
+   - background-image 为渐变（主体显示）
+   - background-color 为渐变末尾色（铺满画布，兜底底部 Home Indicator 安全区） */
 function setScreenBg(gradient) {
-  document.documentElement.style.background = gradient;
-  document.body.style.background = gradient;
+  const fallback = gradientFallback(gradient);
+  document.documentElement.style.backgroundImage = gradient;
+  document.documentElement.style.backgroundColor = fallback;
+  document.body.style.backgroundImage = gradient;
+  document.body.style.backgroundColor = fallback;
 }
 
 function startGame(cat, customDeck) {
   if (customDeck) {
     /* 随机模式：使用跨品类混洗的词组，标签标记为随机 */
     deck = customDeck;
-    setScreenBg("linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)");
     catLabelEl.textContent = "🎲 随机开玩";
   } else {
-    deck = shuffle(cat.words);
-    setScreenBg(cat.gradient);
+    deck = shuffle(cat.words.map(function (w) {
+      return { word: w, gradient: cat.gradient };
+    }));
     catLabelEl.textContent = cat.emoji + " " + cat.name;
   }
   deckIndex = 0;
+  /* 进入时根据首个词所属品类设置背景 */
+  setScreenBg(deck[0].gradient);
   showWord(true);
   homeEl.classList.add("hidden");
   gameEl.classList.remove("hidden");
@@ -384,8 +404,10 @@ function nextWord() {
 function showWord(instant) {
   wordEl.classList.add("out");
   window.setTimeout(() => {
-    wordEl.textContent = deck[deckIndex];
-    fitWord(deck[deckIndex]);
+    /* 换词时同步背景为当前词所属品类的渐变 */
+    setScreenBg(deck[deckIndex].gradient);
+    wordEl.textContent = deck[deckIndex].word;
+    fitWord(deck[deckIndex].word);
     if (instant) {
       wordEl.classList.remove("out");
     } else {
@@ -414,7 +436,7 @@ document.getElementById("back").addEventListener("click", (e) => {
   e.stopPropagation();
   gameEl.classList.add("hidden");
   homeEl.classList.remove("hidden");
-  /* 返回首页时重置 html/body 背景为首页渐变 */
+  /* 返回首页时清除内联背景，恢复 CSS 默认的首页渐变 + 兜底色 */
   document.documentElement.style.background = "";
   document.body.style.background = "";
 });
