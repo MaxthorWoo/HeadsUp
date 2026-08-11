@@ -11,21 +11,25 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  /* 参照 gwentcards.github.io 的做法：html/body 作为 root canvas 直接承载渐变背景。
-     不设 overflow: hidden（页面可自然滚动，背景铺满整个物理屏幕含 safe-area），
-     不使用 fixed/absolute 背景层，完全交给 iOS WebKit 默认渲染。 */
+  /* html/body 作为 root canvas 直接承载渐变背景。
+     height: 100% 建立确定高度体系，使 .screen 的 min-height: 100% 有可靠参照，
+     游戏页 #game 才能撑满视口并垂直居中单词。
+     关键：iOS 中 background-color（纯色）会铺满整个画布（含底部 Home Indicator 安全区），
+     而 background-image（渐变）只在元素盒内。渐变已改为垂直方向（底部整行 = 末尾色），
+     因此用 background-color 设为渐变末尾色兜底，安全区即显示与渐变底部一致的颜色，无缝衔接。 */
   html, body {
     margin: 0;
     padding: 0;
     width: 100%;
-    min-height: 100%;
-    background: linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    height: 100%;
+    background-image: linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    background-color: #24243e;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
     -webkit-user-select: none;
     user-select: none;
   }
 
-  /* 页面布局层：普通块级，min-height 撑满视口，背景透明透出 html/body 渐变。
+  /* 页面布局层：min-height 撑满视口，背景透明透出 html/body 渐变。
      position: relative 作为内部 absolute 元素（topbar/hint）的定位参照。 */
   .screen {
     position: relative;
@@ -226,7 +230,7 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.2.1</p>
+      <p class="version">v1.2.2</p>
     </div>
     <div class="grid" id="grid"></div>
   </div>
@@ -364,11 +368,24 @@ randomCard.addEventListener("click", () => {
 /* 首页默认渐变背景 */
 const HOME_GRADIENT = "linear-gradient(to bottom, #0f0c29 0%, #302b63 50%, #24243e 100%)";
 
-/* 把完整渐变同步到 html + body（root canvas），让背景铺满整个物理屏含 safe-area。
-   不提取末尾色、不做纯色兜底、不操作独立背景层。 */
+/* 从垂直渐变中提取末尾色，作为 background-color 兜底 Home Indicator 安全区。
+   渐变是垂直方向，底部整行都是该末尾色，故与兜底色无缝衔接。 */
+function gradientFallback(gradient) {
+  const m = gradient.match(/#[0-9a-fA-F]{3,6}\s+100%/i);
+  if (m) return m[0].trim().split(/\s+/)[0];
+  const colors = gradient.match(/#[0-9a-fA-F]{3,6}/gi);
+  return colors ? colors[colors.length - 1] : "#24243e";
+}
+
+/* 同步渐变到 html + body（root canvas）：
+   - background-image：完整渐变（主体显示）
+   - background-color：渐变末尾色（铺满画布，兜底底部安全区，颜色与渐变底部无缝一致） */
 function setScreenBg(gradient) {
-  document.documentElement.style.background = gradient;
-  document.body.style.background = gradient;
+  const fallback = gradientFallback(gradient);
+  document.documentElement.style.backgroundImage = gradient;
+  document.documentElement.style.backgroundColor = fallback;
+  document.body.style.backgroundImage = gradient;
+  document.body.style.backgroundColor = fallback;
 }
 
 /* 初始化首页背景 */
