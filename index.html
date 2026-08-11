@@ -78,49 +78,34 @@
     font-weight: 600;
   }
 
-  .grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-content: flex-start;
-    gap: 14px;
-    max-width: 560px;
-    margin: 0 auto;
-  }
-  .card {
-    position: relative;
-    border: none;
-    border-radius: 18px;
-    padding: 22px 10px 16px;
-    color: #fff;
-    cursor: pointer;
+  /* 首页「开始」按钮 */
+  .home-start-wrap {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25);
+    gap: 16px;
+    padding: 30px 20px 0;
+  }
+  .start-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 22px 48px;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    box-shadow: 0 10px 30px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.35);
     transition: transform .15s ease;
-    aspect-ratio: 1 / 1;
-    width: calc(50% - 7px);
-    flex: 0 0 calc(50% - 7px);
-    max-width: 268px;
   }
-  .card:active { transform: scale(.94); }
-  .card .emoji { font-size: 34px; line-height: 1; }
-  .card .name { font-size: 18px; font-weight: 800; letter-spacing: 1px; text-shadow: 0 2px 8px rgba(0,0,0,.4); }
-  .card .count { font-size: 11px; opacity: .85; font-weight: 500; }
-  .card.random {
-    background: linear-gradient(to bottom, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    width: 100%;
-    flex: 1 1 100%;
-    aspect-ratio: auto;
-    padding: 20px;
-    flex-direction: row;
-    gap: 12px;
+  .start-btn:active { transform: scale(.94); }
+  .home-hint {
+    font-size: 13px;
+    color: rgba(255,255,255,.6);
+    letter-spacing: 1px;
   }
-  .card.random .emoji { font-size: 30px; }
-  .card.random .name { font-size: 22px; }
 
   /* ============ 游戏页 ============ */
   #game {
@@ -207,7 +192,6 @@
   @media (orientation: landscape) {
     /* 横屏时 Home Indicator 位于屏幕左右侧，UI 内容需避让 safe-area；
        html/body 渐变背景仍由 root canvas 绘制，不参与避让 */
-    #home .grid { max-width: 900px; }
     #home {
       padding-top: calc(env(safe-area-inset-top) + 24px);
       padding-left: max(20px, env(safe-area-inset-left));
@@ -218,8 +202,6 @@
       padding-right: max(20px, env(safe-area-inset-right));
     }
     #home .title h1 { font-size: 8vh; }
-    .card { aspect-ratio: 4 / 3; width: calc(25% - 10.5px); flex: 0 0 calc(25% - 10.5px); }
-    .card.random { width: 100%; flex: 1 1 100%; aspect-ratio: auto; }
     #word { letter-spacing: 1px; }
   }
 </style>
@@ -230,9 +212,12 @@
   <div id="home" class="screen">
     <div class="title">
       <h1>Heads Up!</h1>
-      <p class="version">v1.4.1</p>
+      <p class="version">v1.5.0</p>
     </div>
-    <div class="grid" id="grid"></div>
+    <div class="home-start-wrap">
+      <button id="start-btn" class="start-btn">🎮 开始游戏</button>
+      <p class="home-hint">点击开始，晃动手机或点屏幕换词</p>
+    </div>
   </div>
 
   <!-- ============ 游戏页 ============ -->
@@ -311,6 +296,30 @@ const CATEGORIES = [
     emoji: "🚀",
     gradient: "linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%)",
     words: ["高铁","地铁","挖掘机","热气球","潜水艇","航空母舰","火箭","飞机","直升机","公交车","出租车","自行车","摩托车","卡车","消防车","救护车","警车","吊车","压路机","搅拌车","房车","面包车","小轿车","跑车","敞篷车","越野车","皮卡车","火车","绿皮火车","磁悬浮列车","动车","轻轨","有轨电车","渡轮","游轮","快艇","渔船","货轮","油轮","破冰船","气垫船","飞船","飞碟","无人机","滑翔伞","降落伞","飞艇","太空站","月球车","坦克","装甲车","独木舟","竹筏","三轮车","叉车"]
+  },
+  {
+    name: "知名人物",
+    emoji: "👤",
+    gradient: "linear-gradient(to bottom, #8E2DE2 0%, #4A00E0 100%)",
+    words: ["秦始皇","汉武帝","唐太宗","武则天","康熙","孔子","孟子","老子","庄子","李白","杜甫","白居易","苏轼","李清照","屈原","司马迁","岳飞","文天祥","郑和","成吉思汗","包拯","王昭君","西施","孙武","华佗","李时珍","达芬奇","牛顿","爱因斯坦","居里夫人","爱迪生","特斯拉","伽利略","达尔文","莎士比亚","贝多芬","莫扎特","梵高","毕加索","拿破仑","华盛顿","林肯","哥伦布","亚里士多德","柏拉图","苏格拉底","凯撒","麦哲伦","哥白尼","雨果","乔布斯","马斯克","比尔盖茨","马化腾","马云","任正非","雷军","周杰伦","刘德华","成龙","李小龙","周星驰","梅西","C罗","姚明","乔丹","科比","泰森","郎朗","张艺谋","莫言","杨振宁","屠呦呦","袁隆平","邓稼先","孙悟空","猪八戒","哪吒","林黛玉","贾宝玉","诸葛亮","关羽","张飞","刘备","曹操","武松","林冲","鲁智深","杨过","小龙女","哈利波特","超人","蝙蝠侠","蜘蛛侠","灰姑娘","白雪公主","哆啦A梦","名侦探柯南","蜡笔小新","蒙娜丽莎"]
+  },
+  {
+    name: "游戏",
+    emoji: "🎮",
+    gradient: "linear-gradient(to bottom, #11998e 0%, #38ef7d 100%)",
+    words: ["马里奥","塞尔达传说","林克","索尼克","皮卡丘","宝可梦","最终幻想","勇者斗恶龙","侠盗猎车手","魔兽世界","英雄联盟","王者荣耀","原神","绝地求生","我的世界","俄罗斯方块","魂斗罗","超级玛丽","拳皇","街头霸王","三国志","仙剑奇侠传","黑神话悟空","暗黑破坏神","星际争霸","守望先锋","堡垒之夜","炉石传说","模拟人生","文明","刺客信条","上古卷轴","辐射","孤岛惊魂","使命召唤","战地","生化危机","寂静岭","洛克人","鬼泣","忍者龙剑传","王国之心","女神异闻录","如龙","只狼","古剑奇谭","双截龙","真三国无双","恐龙快打","星之卡比","喷射战士","动物森友会","马力欧赛车","任天堂明星大乱斗","银河战士","火焰纹章","异度神剑","巫师","战神","血源","黑暗之魂","艾尔登法环","路易吉","碧姬公主","库巴","耀西","士官长","奎托斯","杰洛特","希里","春丽","隆","肯","草薙京","八神庵","不知火舞","吉尔","克里斯","里昂","克莱尔","萨姆丝","劳拉","毁灭战士","亚瑟","瓦利欧","雷顿教授","皮克敏","塞尔达公主","加侬","米法","林月如","李逍遥","赵灵儿","唐雪见","云天河","韩菱纱","生化奇兵","古墓丽影","模拟城市","孢子"]
+  },
+  {
+    name: "坏人",
+    emoji: "👿",
+    gradient: "linear-gradient(to bottom, #7F00FF 0%, #E100FF 100%)",
+    words: ["希特勒","墨索里尼","东条英机","商纣王","夏桀","隋炀帝","周幽王","秦桧","赵高","严嵩","和珅","吴三桂","董卓","李林甫","高俅","魏忠贤","安禄山","史思明","张邦昌","杨国忠","王莽","司马懿","吕布","张献忠","李自成","白起","妲己","褒姒","纣王","黄巢","石敬瑭","贾似道","李莲英","吕后","庞涓","伯嚭","武三思","来俊臣","周兴","万俟卨","陈世美","潘金莲","西门庆","秦二世","吴起","孙膑","伏地魔","灭霸","小丑","达斯维达","格林德沃","玛琳菲森","乌苏拉","贾方","汉尼拔","杰森","弗莱迪","莱克斯卢瑟","毁灭博士","格鲁姆","泰温兰尼斯特","乔佛里","小指头","拉姆斯","夜王","洛基","红骷髅","毒液","绿魔","章鱼博士","沙人","企鹅人","谜语人","双面人","小丑女","贝恩","稻草人","鳄鱼人","泥脸","诺曼贝茨","库伊拉","刀疤","奥创","毁灭日","蝎子王","帕尔帕廷","凯洛伦","斯诺克","霍金斯","铁面人","西尔克","红女巫","海拉","恶灵骑士","万磁王","天启","电索","王振","刘瑾","安德海"]
+  },
+  {
+    name: "电影电视",
+    emoji: "🎬",
+    gradient: "linear-gradient(to bottom, #ee0979 0%, #ff6a00 100%)",
+    words: ["泰坦尼克号","阿凡达","复仇者联盟","蜘蛛侠","钢铁侠","蝙蝠侠","哈利波特","指环王","变形金刚","侏罗纪公园","星球大战","007","碟中谍","速度与激情","流浪地球","战狼","长津湖","卧虎藏龙","霸王别姬","大话西游","活着","阿甘正传","肖申克的救赎","教父","盗梦空间","星际穿越","黑客帝国","狮子王","冰雪奇缘","玩具总动员","寻梦环游记","千与千寻","龙猫","疯狂动物城","功夫熊猫","美女与野兽","阿拉丁","灰姑娘","白雪公主","美人鱼","加勒比海盗","霍比特人","终结者","老友记","权力的游戏","甄嬛传","武林外传","还珠格格","西游记","红楼梦","三国演义","水浒传","亮剑","琅琊榜","白蛇传","上海滩","天龙八部","射雕英雄传","神雕侠侣","寻秦记","大长今","越狱","绝命毒师","生活大爆炸","西部世界","怪奇物语","纸牌屋","黑镜","神探夏洛克","唐顿庄园","破产姐妹","摩登家庭","实习医生格蕾","洛基","小丑","金刚狼","美国队长","雷神","黑寡妇","惊奇队长","绿巨人","奇异博士","死侍","蚁人","鹰眼","猎鹰","冬兵","星爵","格鲁特","火箭浣熊","灭霸","黑豹","绯红女巫","幻视","格温","福尔摩斯","夏洛克","海王","闪电侠","绿箭侠"]
   }
 ];
 
@@ -327,41 +336,29 @@ function shuffle(arr) {
 /* ================= DOM ================= */
 const homeEl = document.getElementById("home");
 const gameEl = document.getElementById("game");
-const gridEl = document.getElementById("grid");
 const wordEl = document.getElementById("word");
 const catLabelEl = document.getElementById("cat-label");
+const startBtn = document.getElementById("start-btn");
 
 /* ================= 游戏状态 ================= */
 let deck = [];
 let deckIndex = 0;
 
-/* ================= 首页渲染 ================= */
-const randomCard = document.createElement("button");
-randomCard.className = "card random";
-randomCard.innerHTML = '<span class="emoji">🎲</span><span class="name">随机开玩</span>';
-gridEl.appendChild(randomCard);
-
-CATEGORIES.forEach(cat => {
-  const btn = document.createElement("button");
-  btn.className = "card";
-  btn.style.background = cat.gradient;
-  btn.innerHTML =
-    '<span class="emoji">' + cat.emoji + "</span>" +
-    '<span class="name">' + cat.name + "</span>" +
-    '<span class="count">' + cat.words.length + " 个词</span>";
-  btn.addEventListener("click", () => startGame(cat));
-  gridEl.appendChild(btn);
-});
-
-randomCard.addEventListener("click", () => {
-  /* 随机模式：把所有品类的所有词混合洗牌，每个词都携带所属品类的背景渐变 */
+/* ================= 首页「开始」 ================= */
+/* 把所有品类的所有词混合成一个 deck，每个词携带所属品类的背景渐变 */
+function buildAllDeck() {
   const all = [];
   CATEGORIES.forEach(function (cat) {
     cat.words.forEach(function (w) {
       all.push({ word: w, gradient: cat.gradient });
     });
   });
-  startGame(null, shuffle(all));
+  return all;
+}
+
+/* 点击「开始游戏」：从全部词库随机混洗开始 */
+startBtn.addEventListener("click", function () {
+  startGame(null, shuffle(buildAllDeck()));
 });
 
 /* ================= 背景 ================= */
@@ -393,15 +390,13 @@ setScreenBg(HOME_GRADIENT);
 
 function startGame(cat, customDeck) {
   if (customDeck) {
-    /* 随机模式：使用跨品类混洗的词组，标签标记为随机 */
     deck = customDeck;
-    catLabelEl.textContent = "🎲 随机开玩";
-  } else {
+  } else if (cat) {
     deck = shuffle(cat.words.map(function (w) {
       return { word: w, gradient: cat.gradient };
     }));
-    catLabelEl.textContent = cat.emoji + " " + cat.name;
   }
+  catLabelEl.textContent = "🎮 游戏进行中";
   deckIndex = 0;
   /* 进入时根据首个词所属品类设置背景 */
   setScreenBg(deck[0].gradient);
